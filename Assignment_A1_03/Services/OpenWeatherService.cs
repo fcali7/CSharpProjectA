@@ -41,7 +41,7 @@ public class OpenWeatherService
 
         Forecast forecast = await ReadWebApiAsync(uri);
 
-        // Spara i cachen
+        ////// Spara i cachen
         _cachedCityForecasts[key] = forecast;
 
         OnWeatherForecastAvailable($"New weather forecast for {forecast.City} available");
