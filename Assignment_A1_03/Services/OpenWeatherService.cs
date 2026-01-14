@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using Newtonsoft.Json;
-
 using Assignment_A1_03.Models;
 
 namespace Assignment_A1_03.Services;
@@ -8,70 +7,96 @@ namespace Assignment_A1_03.Services;
 public class OpenWeatherService
 {
     readonly HttpClient _httpClient = new HttpClient();
+
+    // Cache-listor (Thread Safe)
     readonly ConcurrentDictionary<(double, double, string), Forecast> _cachedGeoForecasts = new ConcurrentDictionary<(double, double, string), Forecast>();
     readonly ConcurrentDictionary<(string, string), Forecast> _cachedCityForecasts = new ConcurrentDictionary<(string, string), Forecast>();
 
     // Your API Key
-    readonly string apiKey = "your_api_key_here"; // Replace with your OpenWeatherMap API key
+    readonly string apiKey = "3c7df5a7e714caaba0dc9513070db525";
 
-    //Event declaration
+    // Event declaration
     public event EventHandler<string> WeatherForecastAvailable;
-    protected virtual void OnWeatherForecastAvailable (string message)
+    protected virtual void OnWeatherForecastAvailable(string message)
     {
         WeatherForecastAvailable?.Invoke(this, message);
     }
+
     public async Task<Forecast> GetForecastAsync(string City)
     {
-        //part of cache code here to check if forecast in Cache
-        //generate an event that shows forecast was from cache
-        //Your code
-        
-        //https://openweathermap.org/current
+        // Vi skapar en tidsstämpel utan sekunder (gäller i 1 minut)
+        string dateString = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        var key = (City, dateString);
+
+        // Kollar om prognosen redan finns i cachen
+        if (_cachedCityForecasts.TryGetValue(key, out Forecast cachedForecast))
+        {
+            OnWeatherForecastAvailable($"Cached weather forecast for {City} available");
+            return cachedForecast;
+        }
+
+        // Om inte cachad, hämta från API
         var language = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
         var uri = $"https://api.openweathermap.org/data/2.5/forecast?q={City}&units=metric&lang={language}&appid={apiKey}";
 
         Forecast forecast = await ReadWebApiAsync(uri);
 
-        //part of event and cache code here
-        //generate an event with different message if cached data
-        //Your code
+        // Spara i cachen
+        _cachedCityForecasts[key] = forecast;
+
+        OnWeatherForecastAvailable($"New weather forecast for {forecast.City} available");
 
         return forecast;
-
     }
+
     public async Task<Forecast> GetForecastAsync(double latitude, double longitude)
     {
-        //part of cache code here to check if forecast in Cache
-        //generate an event that shows forecast was from cache
-        //Your code
+        // Samma logik här, men nyckeln är (lat, lon, tid)
+        string dateString = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        var key = (latitude, longitude, dateString);
 
-        //https://openweathermap.org/current
+        if (_cachedGeoForecasts.TryGetValue(key, out Forecast cachedForecast))
+        {
+            OnWeatherForecastAvailable($"Cached weather forecast for {latitude},{longitude} available");
+            return cachedForecast;
+        }
+
         var language = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
         var uri = $"https://api.openweathermap.org/data/2.5/forecast?lat={latitude}&lon={longitude}&units=metric&lang={language}&appid={apiKey}";
 
         Forecast forecast = await ReadWebApiAsync(uri);
 
-        //part of event and cache code here
-        //generate an event with different message if cached data
-        //Your code
+        _cachedGeoForecasts[key] = forecast;
+
+        OnWeatherForecastAvailable($"New weather forecast for ({latitude},{longitude}) available");
 
         return forecast;
     }
+
     private async Task<Forecast> ReadWebApiAsync(string uri)
     {
         HttpResponseMessage response = await _httpClient.GetAsync(uri);
         response.EnsureSuccessStatusCode();
 
-        //Convert Json to NewsResponse
         string content = await response.Content.ReadAsStringAsync();
         WeatherApiData wd = JsonConvert.DeserializeObject<WeatherApiData>(content);
 
-        //Convert WeatherApiData to Forecast using Linq.
-        //Your code
-        var forecast = new Forecast(); //dummy to compile, replaced by your own code
+        // Convert WeatherApiData to Forecast using Linq
+        var forecast = new Forecast
+        {
+            City = wd.city.name,
+            Items = wd.list.Select(item => new ForecastItem
+            {
+                DateTime = UnixTimeStampToDateTime(item.dt),
+                Temperature = item.main.temp,
+                WindSpeed = item.wind.speed,
+                Description = item.weather.First().description,
+                Icon = item.weather.First().icon
+            }).ToList()
+        };
+
         return forecast;
     }
 
     private DateTime UnixTimeStampToDateTime(double unixTimeStamp) => DateTime.UnixEpoch.AddSeconds(unixTimeStamp).ToLocalTime();
 }
-

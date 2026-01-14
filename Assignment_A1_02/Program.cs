@@ -10,7 +10,7 @@ class Program
         OpenWeatherService service = new OpenWeatherService();
 
         //Register the event
-        //Your Code
+        service.WeatherForecastAvailable += Service_WeatherForecastAvailable;
 
         Task<Forecast>[] tasks = { null, null };
         Exception exception = null;
@@ -29,16 +29,40 @@ class Program
         {
             exception = ex;
             //How to handle an exception
-            //Your Code
+            Console.WriteLine($"Exception: {ex.Message}");
         }
 
         foreach (var task in tasks)
         {
             //How to deal with successful and fault tasks
-            //Your Code
+            if (task != null && task.IsCompletedSuccessfully)
+            {
+                Forecast forecast = task.Result;
+                Console.WriteLine($"Weather forecast for {forecast.City}");
+                Console.WriteLine("----------------------------------");
+
+                var dailyGroups = forecast.Items.GroupBy(item => item.DateTime.Date);
+
+                foreach (var group in dailyGroups)
+                {
+                    Console.WriteLine(group.Key.ToString("yyyy-MM-dd"));
+                    foreach (var item in group)
+                    {
+                        Console.WriteLine($"   {item.DateTime:HH:mm}: {item.Description}, temperature: {item.Temperature} deg, wind: {item.WindSpeed} m/s");
+                    }
+                    Console.WriteLine();
+                }
+            }
+            else if (task?.IsFaulted == true)
+            {
+                Console.WriteLine($"Task failed: {task.Exception?.InnerException?.Message}");
+            }
         }
     }
 
     //Event handler declaration
-    //Your Code
+    private static void Service_WeatherForecastAvailable(object sender, string message)
+    {
+        Console.WriteLine($"Event message from weather service: {message}");
+    }
 }

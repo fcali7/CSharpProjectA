@@ -10,10 +10,33 @@ class Program
         double latitude = 59.5086798659495;
         double longitude = 18.2654625932976;
 
-        Forecast forecast = await new OpenWeatherService().GetForecastAsync(latitude, longitude);
+        try
+        {
+            Forecast forecast = await new OpenWeatherService().GetForecastAsync(latitude, longitude);
 
-        //Your Code to present each forecast item in a grouped list
-        Console.WriteLine($"Weather forecast for {forecast.City}");
+            Console.WriteLine($"Weather forecast for {forecast.City}");
+            Console.WriteLine("----------------------------------");
+
+            
+            var dailyGroups = forecast.Items.GroupBy(item => item.DateTime.Date);
+
+            foreach (var group in dailyGroups)
+            {
+                
+                Console.WriteLine(group.Key.ToString("yyyy-MM-dd"));
+
+                foreach (var item in group)
+                {
+                    
+                    Console.WriteLine($"   {item.DateTime:HH:mm}: {item.Description}, temperature: {item.Temperature} deg, wind: {item.WindSpeed} m/s");
+                }
+                Console.WriteLine(); 
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Något gick fel (Har du lagt in API-nyckeln?): {ex.Message}");
+        }
     }
 }
 
