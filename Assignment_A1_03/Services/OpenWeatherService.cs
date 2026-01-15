@@ -24,24 +24,24 @@ public class OpenWeatherService
 
     public async Task<Forecast> GetForecastAsync(string City)
     {
-        // Vi skapar en tidsstämpel utan sekunder (gäller i 1 minut)
+        
         string dateString = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
         var key = (City, dateString);
 
-        // Kollar om prognosen redan finns i cachen
+        
         if (_cachedCityForecasts.TryGetValue(key, out Forecast cachedForecast))
         {
             OnWeatherForecastAvailable($"Cached weather forecast for {City} available");
             return cachedForecast;
         }
 
-        // Om inte cachad, hämta från API
+        
         var language = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
         var uri = $"https://api.openweathermap.org/data/2.5/forecast?q={City}&units=metric&lang={language}&appid={apiKey}";
 
         Forecast forecast = await ReadWebApiAsync(uri);
 
-        ////// Spara i cachen
+        
         _cachedCityForecasts[key] = forecast;
 
         OnWeatherForecastAvailable($"New weather forecast for {forecast.City} available");
@@ -51,7 +51,7 @@ public class OpenWeatherService
 
     public async Task<Forecast> GetForecastAsync(double latitude, double longitude)
     {
-        // Samma logik här, men nyckeln är (lat, lon, tid)
+        
         string dateString = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
         var key = (latitude, longitude, dateString);
 
