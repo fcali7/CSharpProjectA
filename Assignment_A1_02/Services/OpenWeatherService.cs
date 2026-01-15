@@ -18,7 +18,7 @@ public class OpenWeatherService
 
     public async Task<Forecast> GetForecastAsync(string City)
     {
-        //https://openweathermap.org/current
+        //////https://openweathermap.org/current
         var language = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
         var uri = $"https://api.openweathermap.org/data/2.5/forecast?q={City}&units=metric&lang={language}&appid={_apiKey}";
 
