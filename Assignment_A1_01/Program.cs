@@ -28,7 +28,7 @@ class Program
                 foreach (var item in group)
                 {
                     
-                    Console.WriteLine($"   {item.DateTime:HH:mm}: {item.Description}, temperature: {item.Temperature} deg, wind: {item.WindSpeed} m/s");
+                    Console.WriteLine($"   {item.DateTime:HH:mm}: {item.Description}, Temperature: {item.Temperature} degree C, Wind: {item.WindSpeed} m/s");
                 }
                 Console.WriteLine(); 
             }
