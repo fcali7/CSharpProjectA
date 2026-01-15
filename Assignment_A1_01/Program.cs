@@ -1,4 +1,10 @@
-﻿using Assignment_A1_01.Models;
+﻿/*
+ * Inlämning: Project Part A
+ * Namn: Ali Ahmadi
+ * GitHub Repo: https://github.com/fcali7/CSharpProjectA.git
+ */
+
+using Assignment_A1_01.Models;
 using Assignment_A1_01.Services;
 
 namespace Assignment_A1_01;
